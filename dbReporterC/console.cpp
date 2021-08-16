@@ -21,12 +21,12 @@ void console::addColor(TCHAR* buf, char change)
 void console::print(dbConnections conns, dbConnections prevConns) {
 	clear_screen(' ');
 
-	_CHAR_INFO* consBuf = new _CHAR_INFO[s.dwSize.X * s.dwSize.Y];
-	_SMALL_RECT rect = { 0, 0, s.dwSize.X, s.dwSize.Y };
-	ReadConsoleOutput(hOut1, consBuf, { s.dwSize.X, s.dwSize.Y }, { 0, 0 }, &rect);
-	WriteConsoleOutput(hOut2, consBuf, { s.dwSize.X, s.dwSize.Y }, { 0, 0 }, &rect);
-	delete[] consBuf;
-	SetConsoleActiveScreenBuffer(hOut2);
+	//_CHAR_INFO* consBuf = new _CHAR_INFO[s.dwSize.X * s.dwSize.Y];
+	//_SMALL_RECT rect = { 0, 0, s.dwSize.X, s.dwSize.Y };
+	//ReadConsoleOutput(hOut1, consBuf, { s.dwSize.X, s.dwSize.Y }, { 0, 0 }, &rect);
+	//WriteConsoleOutput(hOut2, consBuf, { s.dwSize.X, s.dwSize.Y }, { 0, 0 }, &rect);
+	//delete[] consBuf;
+	//SetConsoleActiveScreenBuffer(hOut2);
 
 	int newConnections = 0;
 	int oldConnections = 0;
@@ -38,7 +38,7 @@ void console::print(dbConnections conns, dbConnections prevConns) {
 
 		if (!(h < prevConns.Cnt())) {
 			newHost = true;
-			prevConns.Add(host());
+			prevConns.AllocNew();
 		}
 
 		memcpy(buf, conns.data[h].name, conns.data[h].nameSize);
@@ -50,13 +50,13 @@ void console::print(dbConnections conns, dbConnections prevConns) {
 
 		for (unsigned int p = 0; p < conns.data[h].Cnt(); p++) {
 			bool newProg = false, newConns = false;
-			unsigned short statuses[5] = { (USHORT)dbConn::status::NA };
-			unsigned short prevStatuses[5] = { (USHORT)dbConn::status::NA };
+			char statuses[5] = { 0 };
+			char prevStatuses[5] = { 0 };
 			dbConn sum, prevSum;
 
 			if (!(p < prevConns.data[h].Cnt())) {
 				newProg = true;
-				prevConns.data[h].Add(program());
+				prevConns.data[h].AllocNew();
 			}
 
 			for (unsigned int c = 0; c < conns.data[h].data[p].Cnt(); c++) {
@@ -82,10 +82,10 @@ void console::print(dbConnections conns, dbConnections prevConns) {
 
 			TCHAR cnts[5][6] = { {'\0'} };
 			addColor(cnts[0], newConns);
-			addColor(cnts[1], getChange(prevStatuses[(int)dbConn::status::Running], statuses[(int)dbConn::status::Running]));
-			addColor(cnts[2], getChange(prevStatuses[(int)dbConn::status::Sleeping], statuses[(int)dbConn::status::Sleeping]));
-			addColor(cnts[3], getChange(prevStatuses[(int)dbConn::status::Dormant], statuses[(int)dbConn::status::Dormant]));
-			addColor(cnts[4], getChange(prevStatuses[(int)dbConn::status::Preconnect], statuses[(int)dbConn::status::Preconnect]));
+			addColor(cnts[1], getChange(prevStatuses[1], statuses[1]));
+			addColor(cnts[2], getChange(prevStatuses[2], statuses[2]));
+			addColor(cnts[3], getChange(prevStatuses[3], statuses[3]));
+			addColor(cnts[4], getChange(prevStatuses[4], statuses[4]));
 
 			TCHAR cpuMem[2][6] = { {'\0'} };
 			addColor(cnts[0], getChange(prevSum.cpu_time, sum.cpu_time));
@@ -96,11 +96,11 @@ void console::print(dbConnections conns, dbConnections prevConns) {
 			addColor(io[1], getChange(prevSum.writes, sum.writes));
 			addColor(io[2], getChange(prevSum.logical_reads, sum.logical_reads));
 
-			printf(STRING("\n\t%s%s - %s%02d:%02d.%02d.%03d (%d.%d.%d)\x1B[0m"), name, buf, date, sum.login_time.hour, sum.login_time.minute, sum.login_time.second, sum.login_time.fraction / 1000000, sum.login_time.day, sum.login_time.month, sum.login_time.year);
+			printf(STRING("\n\t%s%s - %s%02d:%02d.%02d\x1B[0m"), name, buf, date, sum.login_time.hour, sum.login_time.minute, sum.login_time.second);
 			printf(STRING("\n\t - Connections: %s%d\x1B[0m (Running: %s%d\x1B[0m Sleeping: %s%d\x1B[0m Dormant: %s%d\x1B[0m Preconnect: %s%d\x1B[0m)\n\
 \t - CPU time: %s%d\x1B[0m Memory: %s%d\x1B[0m\n\
 \t - Reads: %s%d\x1B[0m Writes: %s%d\x1B[0m Memory reads: %s%d\x1B[0m\n"),
-cnts[0], conns.data[h].data[p].Cnt(), cnts[1], statuses[(int)dbConn::status::Running], cnts[2], statuses[(int)dbConn::status::Sleeping], cnts[3], statuses[(int)dbConn::status::Dormant], cnts[4], statuses[(int)dbConn::status::Preconnect],
+cnts[0], conns.data[h].data[p].Cnt(), cnts[1], statuses[1], cnts[2], statuses[2], cnts[3], statuses[3], cnts[4], statuses[4],
 cpuMem[0], sum.cpu_time, cpuMem[1], sum.memory_usage,
 io[0], (int)sum.reads, io[1], (int)sum.writes, io[2], (int)sum.logical_reads
 );
@@ -119,17 +119,17 @@ void console::InitConsoleOutput(PHANDLER_ROUTINE callBack) {
 		throw 0;
 	hOut1 = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (hOut1 == INVALID_HANDLE_VALUE)
-		throw GetLastError();
+		throw 0;
 	DWORD dwMode = 0;
 	if (!GetConsoleMode(hOut1, &dwMode))
-		throw GetLastError();
+		throw 0;
 	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 	if (!SetConsoleMode(hOut1, dwMode))
-		throw GetLastError();
+		throw 0;
 	GetConsoleScreenBufferInfo(hOut1, &s);
 	hOut2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE, 0, CONSOLE_TEXTMODE_BUFFER, 0);
 	if (hOut2 == INVALID_HANDLE_VALUE)
-		throw GetLastError();
+		throw 0;
 }
 
 template <class T>

@@ -6,20 +6,18 @@
 #include <sql.h>
 #include <sqlext.h>
 #include <fstream>
-#include <iostream>
 
 #include "dbConn.h"
 
 #ifdef UNICODE
 #define STRING(x) L ##x
-#define TCOUT std::wcout
+#include <cwchar>
 #define printf wprintf
 #define ttoi _wtoi
 typedef std::wifstream tifstream;
 typedef std::wofstream tofstream;
 #else
 #define STRING(x) x
-#define TCOUT std::cout
 #define printf printf
 #define ttoi atoi
 typedef std::ifstream tifstream;
@@ -41,7 +39,7 @@ public:
 	SQLRETURN Fetch();
 	void fetchNext();
 	void closeSqlConn();
-	void AllocSqlConn(SQLTCHAR* connStr);
+	void AllocSqlConn(TCHAR* connStr);
 	void bindCols(dbConn* row, TCHAR* hName, SQLLEN* hNameLen, TCHAR* pName, SQLLEN* pNameLen, TCHAR* status);
 	void loadConfig(TCHAR*& connStr, int* updateRate);
 };

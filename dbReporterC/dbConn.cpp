@@ -3,7 +3,7 @@
 dbConn& dbConn::operator+=(const dbConn& a)
 {
 	id++;
-	if (connStatus == status::NA || a.connStatus > connStatus)
+	if (connStatus == 0 || a.connStatus > connStatus)
 		connStatus = a.connStatus;
 	cpu_time += a.cpu_time;
 	memory_usage += a.memory_usage;
@@ -12,28 +12,28 @@ dbConn& dbConn::operator+=(const dbConn& a)
 	reads += a.reads;
 	row_count += a.row_count;
 	writes += a.writes;
-	if (login_time.year == 0 && login_time.month == 0 && login_time.day == 0 && login_time.hour == 0 && login_time.minute == 0 && login_time.second == 0 && login_time.fraction == 0)
+	if (login_time == TIME_STRUCT())
 		login_time = a.login_time;
 	else if (a.login_time < login_time)
 		login_time = a.login_time;
-	if (last_request_start_time.year == 0 && last_request_start_time.month == 0 && last_request_start_time.day == 0 && last_request_start_time.hour == 0 && last_request_start_time.minute == 0 && last_request_start_time.second == 0 && last_request_start_time.fraction == 0)
+	if (last_request_start_time == TIME_STRUCT())
 		last_request_start_time = a.last_request_start_time;
 	if (a.last_request_start_time < last_request_start_time)
 		last_request_start_time = a.last_request_start_time;
 	return *this;
 }
 
-dbConn::status dbConn::getStatus(const TCHAR* str) {
+char dbConn::getStatus(const TCHAR* str) {
 	if (isSame(str, STRING("sleeping")))
-		return status::Sleeping;
+		return 1;
 	else if (isSame(str, STRING("running")))
-		return status::Running;
+		return 2;
 	else if (isSame(str, STRING("dormant")))
-		return status::Dormant;
+		return 3;
 	else if (isSame(str, STRING("preconnect")))
-		return status::Preconnect;
+		return 4;
 	else
-		return status::NA;
+		return 0;
 }
 
 bool isSame(const TCHAR* a, const TCHAR* b) {
@@ -45,24 +45,31 @@ bool isSame(const TCHAR* a, const TCHAR* b) {
 	return true;
 }
 
-bool operator< (const TIMESTAMP_STRUCT& t1, const TIMESTAMP_STRUCT& t2) {
-	return (t1.year < t2.year)
-		|| (t1.year == t2.year && t1.month < t2.month)
-		|| (t1.year == t2.year && t1.month == t2.month && t1.day < t2.day)
-		|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour < t2.hour)
-		|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour == t2.hour && t1.minute < t2.minute)
-		|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second)
-		|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second&& t1.fraction < t2.fraction);
+bool operator< (const TIME_STRUCT& t1, const TIME_STRUCT& t2) {
+	return (t1.hour < t2.hour)
+		|| (t1.hour == t2.hour && t1.minute < t2.minute)
+		|| (t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second)
+		|| (t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second);
+	//return (t1.year < t2.year)
+	//	|| (t1.year == t2.year && t1.month < t2.month)
+	//	|| (t1.year == t2.year && t1.month == t2.month && t1.day < t2.day)
+	//	|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour < t2.hour)
+	//	|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour == t2.hour && t1.minute < t2.minute)
+	//	|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second)
+	//	|| (t1.year == t2.year && t1.month == t2.month && t1.day == t2.day && t1.hour == t2.hour && t1.minute == t2.minute && t1.second = t2.second && t1.fraction < t2.fraction);
 }
 
-bool operator== (const TIMESTAMP_STRUCT& t1, const TIMESTAMP_STRUCT& t2) {
-	return t1.fraction == t2.fraction
-		&& t1.second == t2.second
+bool operator== (const TIME_STRUCT& t1, const TIME_STRUCT& t2) {
+	return t1.second == t2.second
 		&& t1.minute == t2.minute
-		&& t1.hour == t2.hour
-		&& t1.day == t2.day
-		&& t1.month == t2.month
-		&& t1.year == t2.year;
+		&& t1.hour == t2.hour;
+	//return t1.fraction == t2.fraction
+	//	&& t1.second == t2.second
+	//	&& t1.minute == t2.minute
+	//	&& t1.hour == t2.hour
+	//	&& t1.day == t2.day
+	//	&& t1.month == t2.month
+	//	&& t1.year == t2.year;
 }
 
 bool operator!= (const dbConn& a, const dbConn& b) {

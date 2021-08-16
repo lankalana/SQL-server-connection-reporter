@@ -8,12 +8,10 @@
 
 #ifdef UNICODE
 #define STRING(x) L ##x
-#define TCOUT std::wcout
 #define printf wprintf
 #define ttoi _wtoi
 #else
 #define STRING(x) x
-#define TCOUT std::cout
 #define printf printf
 #define ttoi atoi
 #endif // UNICODE

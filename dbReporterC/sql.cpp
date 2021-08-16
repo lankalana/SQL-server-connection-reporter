@@ -8,12 +8,8 @@ SQLRETURN sql::Fetch() {
 }
 
 void sql::fetchNext() {
-	SQLTCHAR query[] = STRING("SELECT session_id, status, host_name, program_name, cpu_time, memory_usage, open_transaction_count, logical_reads, reads, row_count, writes, login_time, last_request_start_time FROM sys.dm_exec_sessions eS WHERE is_user_process = 1 AND database_id = DB_ID(db_name()) ORDER BY login_time");
+	SQLTCHAR query[] = STRING("SELECT session_id, status, host_name, program_name, cpu_time, memory_usage, open_transaction_count, logical_reads, reads, row_count, writes, CAST(login_time as time(0)), CAST(last_request_start_time as time(0)) FROM sys.dm_exec_sessions eS WHERE is_user_process = 1 AND database_id = DB_ID(db_name()) ORDER BY login_time");
 	SQLFUNCEXEX(SQLExecDirect(hStmt, query, SQL_NTS), SQL_HANDLE_STMT, hStmt);
-	SQLSMALLINT rowCnt;
-	SQLFUNCEXEX(SQLNumResultCols(hStmt, &rowCnt), SQL_HANDLE_STMT, hStmt);
-	if (rowCnt <= 0)
-		throw std::exception();
 }
 
 void sql::loadConfig(TCHAR*& connStr, int* updateRate) {
@@ -72,7 +68,7 @@ void sql::GetExtraInfo(SQLRETURN ret, SQLSMALLINT hType, SQLHANDLE handle)
 		// Get the status records.
 		i = 1;
 		while (i <= numRecs && (ret2 = SQLGetDiagRec(hType, handle, i, SqlState, &NativeError, Msg, 2048, &MsgLen)) != SQL_NO_DATA) {
-			TCOUT << SqlState << ' ' << NativeError << ' ' << Msg << std::endl;
+			printf(STRING("%s %d %s\n"), SqlState, NativeError, Msg);
 			i++;
 		}
 		if (ret == SQL_ERROR)
@@ -80,7 +76,7 @@ void sql::GetExtraInfo(SQLRETURN ret, SQLSMALLINT hType, SQLHANDLE handle)
 	}
 }
 
-void sql::AllocSqlConn(SQLTCHAR* connStr)
+void sql::AllocSqlConn(TCHAR* connStr)
 {
 	SQLRETURN res;
 	SQLFUNCEXEX(SQLAllocHandle(SQL_HANDLE_ENV, nullptr, &hEnv), SQL_HANDLE_ENV, hEnv);
@@ -91,7 +87,7 @@ void sql::AllocSqlConn(SQLTCHAR* connStr)
 	if (connStr == nullptr) {
 		newConnStr = new TCHAR[2048];
 		maxLen = 2048;
-		SQLFUNCEXEX(SQLDriverConnect(hdb, GetDesktopWindow(), connStr, SQL_NTS, newConnStr, maxLen, &maxLen, SQL_DRIVER_COMPLETE_REQUIRED), SQL_HANDLE_DBC, hdb);
+		SQLFUNCEXEX(SQLDriverConnect(hdb, GetDesktopWindow(), (SQLTCHAR*)connStr, SQL_NTS, (SQLTCHAR*)newConnStr, maxLen, &maxLen, SQL_DRIVER_COMPLETE_REQUIRED), SQL_HANDLE_DBC, hdb);
 		tofstream myfile;
 		myfile.open("config.cfg", std::ios::trunc);
 		myfile << STRING("connectionString = \"");
@@ -101,7 +97,7 @@ void sql::AllocSqlConn(SQLTCHAR* connStr)
 		delete[] newConnStr;
 	}
 	else
-		SQLFUNCEXEX(SQLDriverConnect(hdb, GetDesktopWindow(), connStr, SQL_NTS, newConnStr, maxLen, &maxLen, SQL_DRIVER_COMPLETE_REQUIRED), SQL_HANDLE_DBC, hdb);
+		SQLFUNCEXEX(SQLDriverConnect(hdb, GetDesktopWindow(), (SQLTCHAR*)connStr, SQL_NTS, nullptr, 0, nullptr, SQL_DRIVER_COMPLETE_REQUIRED), SQL_HANDLE_DBC, hdb);
 	SQLFUNCEXEX(SQLSetConnectAttr(hdb, SQL_ACCESS_MODE, (SQLPOINTER)SQL_MODE_READ_ONLY, 0), SQL_HANDLE_DBC, hdb);
 	SQLFUNCEXEX(SQLAllocHandle(SQL_HANDLE_STMT, hdb, &hStmt), SQL_HANDLE_DBC, hdb);
 }
@@ -121,13 +117,13 @@ void sql::bindCols(dbConn* row, TCHAR* hName, SQLLEN* hNameLen, TCHAR* pName, SQ
 	SQLFUNCEXEX(SQLBindCol(hStmt, 2, SQL_C_TCHAR, status, 60, nullptr), SQL_HANDLE_STMT, hStmt);
 	SQLFUNCEXEX(SQLBindCol(hStmt, 3, SQL_C_TCHAR, hName, *hNameLen, hNameLen), SQL_HANDLE_STMT, hStmt);
 	SQLFUNCEXEX(SQLBindCol(hStmt, 4, SQL_C_TCHAR, pName, *pNameLen, pNameLen), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 5, SQL_C_SLONG, &(*row).cpu_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 6, SQL_C_SLONG, &(*row).memory_usage, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 7, SQL_C_SLONG, &(*row).open_transaction_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 8, SQL_C_SBIGINT, &(*row).logical_reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 9, SQL_C_SBIGINT, &(*row).reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 10, SQL_C_SBIGINT, &(*row).row_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 11, SQL_C_SBIGINT, &(*row).writes, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 12, SQL_C_TIMESTAMP, &(*row).login_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 13, SQL_C_TIMESTAMP, &(*row).last_request_start_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 5, SQL_C_USHORT, &(*row).cpu_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 6, SQL_C_USHORT, &(*row).memory_usage, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 7, SQL_C_USHORT, &(*row).open_transaction_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 8, SQL_C_ULONG, &(*row).logical_reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 9, SQL_C_ULONG, &(*row).reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 10, SQL_C_ULONG, &(*row).row_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 11, SQL_C_ULONG, &(*row).writes, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 12, SQL_C_TIME, &(*row).login_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 13, SQL_C_TIME, &(*row).last_request_start_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
 }

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#define NAME_LEN 512
+#define NAME_LEN 256
 #define SLEEP_STEP 250
 
 #include "sql.h"
@@ -44,17 +44,18 @@ int wmain()
 
 	try {
 		dbConnections prevData;
+		dbConn row;
+		TCHAR host_name[NAME_LEN] = { 0 };
+		TCHAR program_name[NAME_LEN] = { 0 };
+		SQLLEN host_nameSize = NAME_LEN;
+		SQLLEN program_nameSize = NAME_LEN;
+		TCHAR status[60] = { 0 };
+		sqlObj.bindCols(&row, host_name, &host_nameSize, program_name, &program_nameSize, status);
+
 		while (true)
 		{
-			sqlObj.fetchNext();
 			dbConnections data;
-			dbConn row;
-			TCHAR host_name[NAME_LEN] = { 0 };
-			SQLLEN host_nameSize = NAME_LEN;
-			TCHAR program_name[NAME_LEN] = { 0 };
-			SQLLEN program_nameSize = NAME_LEN;
-			TCHAR status[60] = { 0 };
-			sqlObj.bindCols(&row, host_name, &host_nameSize, program_name, &program_nameSize, status);
+			sqlObj.fetchNext();
 			SQLRETURN res = sqlObj.Fetch();
 			while (res != SQL_NO_DATA)
 			{
@@ -62,22 +63,18 @@ int wmain()
 				host* hst = data.Get(host_name, (uint32_t)host_nameSize);
 				if (hst == nullptr)
 				{
-					host temp;
-					memcpy(temp.name, host_name, (uint32_t)host_nameSize);
-					temp.nameSize = (int)host_nameSize;
-					data.Add(temp);
-					hst = &data.data[data.Cnt() - 1];
+					hst = data.AllocNew();
+					memcpy(hst->name, host_name, (uint32_t)host_nameSize);
+					hst->nameSize = (int)host_nameSize;
 				}
 				program* prog = (*hst).Get(program_name, (uint32_t)program_nameSize);
 				if (prog == nullptr)
 				{
-					program temp;
-					memcpy(temp.name, program_name, (uint32_t)program_nameSize);
-					temp.nameSize = (int)program_nameSize;
-					(*hst).Add(temp);
-					prog = &(*hst).data[(*hst).Cnt() - 1];
+					prog = hst->AllocNew();
+					memcpy(prog->name, program_name, (uint32_t)program_nameSize);
+					prog->nameSize = (int)program_nameSize;
 				}
-				(*prog).Add(row);
+				memcpy(prog->AllocNew(), &row, sizeof(dbConn));
 				res = sqlObj.Fetch();
 			}
 			sqlObj.CloseCursor();
@@ -85,11 +82,8 @@ int wmain()
 				cons.print(data, prevData);
 				prevData = data;
 			}
-			for (USHORT i = 0; i < updateRate; i += SLEEP_STEP) {
-				//if (GetKeyState(VK_ESCAPE) & 0x8000)
-				//	goto end;
+			for (USHORT i = 0; i < updateRate; i += SLEEP_STEP)
 				Sleep(SLEEP_STEP);
-			}
 		}
 	}
 	catch (std::exception e) {

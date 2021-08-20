@@ -178,7 +178,14 @@
   <ItemGroup>
     <ClInclude Include="console.h" />
     <ClInclude Include="dbConn.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="sql.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="dbReporterC.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sql.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -21,7 +21,7 @@ private:
 	const TCHAR* KNRM = STRING("\x1B[0m");
 	const TCHAR* KRED = STRING("\x1B[31m");
 	const TCHAR* KGRN = STRING("\x1B[32m");
-	HANDLE hOut1, hOut2;
+	HANDLE hOut1;
 	CONSOLE_SCREEN_BUFFER_INFO s;
 public:
 	void clear_screen(char);

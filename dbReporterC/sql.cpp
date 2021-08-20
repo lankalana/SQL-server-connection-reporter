@@ -78,7 +78,6 @@ void sql::GetExtraInfo(SQLRETURN ret, SQLSMALLINT hType, SQLHANDLE handle)
 
 void sql::AllocSqlConn(TCHAR* connStr)
 {
-	SQLRETURN res;
 	SQLFUNCEXEX(SQLAllocHandle(SQL_HANDLE_ENV, nullptr, &hEnv), SQL_HANDLE_ENV, hEnv);
 	SQLSetEnvAttr(hEnv, 200, (SQLPOINTER)3UL, 0);
 	SQLFUNCEXEX(SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hdb), SQL_HANDLE_ENV, hEnv);
@@ -112,7 +111,6 @@ void sql::closeSqlConn()
 
 void sql::bindCols(dbConn* row, TCHAR* hName, SQLLEN* hNameLen, TCHAR* pName, SQLLEN* pNameLen, TCHAR* status)
 {
-	SQLRETURN res;
 	SQLFUNCEXEX(SQLBindCol(hStmt, 1, SQL_C_SHORT, &(*row).id, 0, nullptr), SQL_HANDLE_STMT, hStmt);
 	SQLFUNCEXEX(SQLBindCol(hStmt, 2, SQL_C_TCHAR, status, 60, nullptr), SQL_HANDLE_STMT, hStmt);
 	SQLFUNCEXEX(SQLBindCol(hStmt, 3, SQL_C_TCHAR, hName, *hNameLen, hNameLen), SQL_HANDLE_STMT, hStmt);

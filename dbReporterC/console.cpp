@@ -20,17 +20,6 @@ void console::addColor(TCHAR* buf, char change)
 
 void console::print(dbConnections conns, dbConnections prevConns) {
 	clear_screen(' ');
-
-	//_CHAR_INFO* consBuf = new _CHAR_INFO[s.dwSize.X * s.dwSize.Y];
-	//_SMALL_RECT rect = { 0, 0, s.dwSize.X, s.dwSize.Y };
-	//ReadConsoleOutput(hOut1, consBuf, { s.dwSize.X, s.dwSize.Y }, { 0, 0 }, &rect);
-	//WriteConsoleOutput(hOut2, consBuf, { s.dwSize.X, s.dwSize.Y }, { 0, 0 }, &rect);
-	//delete[] consBuf;
-	//SetConsoleActiveScreenBuffer(hOut2);
-
-	int newConnections = 0;
-	int oldConnections = 0;
-
 	for (unsigned int h = 0; h < conns.Cnt(); h++) {
 		bool newHost = false;
 		TCHAR buf[NAME_LEN] = { '\0' };
@@ -67,12 +56,9 @@ void console::print(dbConnections conns, dbConnections prevConns) {
 					prevStatuses[(int)prevConns.data[h].data[p].data[c].connStatus]++;
 				}
 				else {
-					newConnections++;
 					newConns = true;
 				}
 			}
-			if (prevConns.data[h].data[p].Cnt() > conns.data[h].data[p].Cnt())
-				oldConnections += prevConns.data[h].data[p].Cnt() - conns.data[h].data[p].Cnt();
 
 			memcpy(buf, conns.data[h].data[p].name, conns.data[h].data[p].nameSize);
 			addColor(name, newProg);
@@ -110,7 +96,6 @@ io[0], (int)sum.reads, io[1], (int)sum.writes, io[2], (int)sum.logical_reads
 		}
 		printf(STRING("\n"));
 	}
-	printf(STRING("New connections %d, disconnections: %d"), newConnections, oldConnections);
 	SetConsoleActiveScreenBuffer(hOut1);
 }
 
@@ -127,9 +112,6 @@ void console::InitConsoleOutput(PHANDLER_ROUTINE callBack) {
 	if (!SetConsoleMode(hOut1, dwMode))
 		throw 0;
 	GetConsoleScreenBufferInfo(hOut1, &s);
-	hOut2 = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_WRITE, 0, CONSOLE_TEXTMODE_BUFFER, 0);
-	if (hOut2 == INVALID_HANDLE_VALUE)
-		throw 0;
 }
 
 template <class T>

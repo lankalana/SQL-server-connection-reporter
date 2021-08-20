@@ -21,10 +21,10 @@
     <ClCompile Include="sql.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dbConn.cpp">
+    <ClCompile Include="console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="console.cpp">
+    <ClCompile Include="dataTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,14 +35,14 @@
     <ClInclude Include="sql.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dbConn.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dataTypes.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

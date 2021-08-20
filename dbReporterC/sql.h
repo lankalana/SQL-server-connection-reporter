@@ -7,7 +7,7 @@
 #include <sqlext.h>
 #include <fstream>
 
-#include "dbConn.h"
+#include "dataTypes.h"
 
 #ifdef UNICODE
 #define STRING(x) L ##x
@@ -40,6 +40,6 @@ public:
 	void fetchNext();
 	void closeSqlConn();
 	void AllocSqlConn(TCHAR* connStr);
-	void bindCols(dbConn* row, TCHAR* hName, SQLLEN* hNameLen, TCHAR* pName, SQLLEN* pNameLen, TCHAR* status);
+	void bindCols(Connected::dataRow* row);
 	void loadConfig(TCHAR*& connStr, int* updateRate);
 };

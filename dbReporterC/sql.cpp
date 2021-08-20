@@ -8,7 +8,7 @@ SQLRETURN sql::Fetch() {
 }
 
 void sql::fetchNext() {
-	SQLTCHAR query[] = STRING("SELECT session_id, status, host_name, program_name, cpu_time, memory_usage, open_transaction_count, logical_reads, reads, row_count, writes, CAST(login_time as time(0)), CAST(last_request_start_time as time(0)) FROM sys.dm_exec_sessions eS WHERE is_user_process = 1 AND database_id = DB_ID(db_name()) ORDER BY login_time");
+	SQLTCHAR query[] = STRING("SELECT session_id, status, host_name, program_name, cpu_time, memory_usage, open_transaction_count, logical_reads, reads, row_count, writes, CAST(login_time as time(0)) FROM sys.dm_exec_sessions eS WHERE is_user_process = 1 AND database_id = DB_ID(db_name()) ORDER BY login_time");
 	SQLFUNCEXEX(SQLExecDirect(hStmt, query, SQL_NTS), SQL_HANDLE_STMT, hStmt);
 }
 
@@ -29,7 +29,7 @@ void sql::loadConfig(TCHAR*& connStr, int* updateRate) {
 		is.close();
 
 		for (unsigned int i = 0; i < length; i++) {
-			if (i < length - 16 && isSame(&buff[i], STRING("connectionString")))
+			if (i < length - 16 && Connected::isSame(&buff[i], STRING("connectionString")))
 			{
 				i += 16;
 				while (i + 1 < length && buff[++i] != '"') {}
@@ -39,7 +39,7 @@ void sql::loadConfig(TCHAR*& connStr, int* updateRate) {
 				connStr = new TCHAR[len + 1]{ '\0' };
 				memcpy(connStr, &buff[i - len], len * sizeof(TCHAR));
 			}
-			if (i < length - 10 && isSame(&buff[i], STRING("updateRate")))
+			if (i < length - 10 && Connected::isSame(&buff[i], STRING("updateRate")))
 			{
 				i += 10;
 				while (i + 1 < length && buff[++i] != '"') {}
@@ -109,19 +109,18 @@ void sql::closeSqlConn()
 	SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
 }
 
-void sql::bindCols(dbConn* row, TCHAR* hName, SQLLEN* hNameLen, TCHAR* pName, SQLLEN* pNameLen, TCHAR* status)
+void sql::bindCols(Connected::dataRow* row)
 {
-	SQLFUNCEXEX(SQLBindCol(hStmt, 1, SQL_C_SHORT, &(*row).id, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 2, SQL_C_TCHAR, status, 60, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 3, SQL_C_TCHAR, hName, *hNameLen, hNameLen), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 4, SQL_C_TCHAR, pName, *pNameLen, pNameLen), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 5, SQL_C_USHORT, &(*row).cpu_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 6, SQL_C_USHORT, &(*row).memory_usage, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 7, SQL_C_USHORT, &(*row).open_transaction_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 8, SQL_C_ULONG, &(*row).logical_reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 9, SQL_C_ULONG, &(*row).reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 10, SQL_C_ULONG, &(*row).row_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 11, SQL_C_ULONG, &(*row).writes, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 12, SQL_C_TIME, &(*row).login_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
-	SQLFUNCEXEX(SQLBindCol(hStmt, 13, SQL_C_TIME, &(*row).last_request_start_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 1, SQL_C_SHORT, &row->id, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 2, SQL_C_TCHAR, row->status, 60, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 3, SQL_C_TCHAR, row->host_name, row->host_nameSize, &row->host_nameSize), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 4, SQL_C_TCHAR, row->program_name, row->program_nameSize, &row->program_nameSize), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 5, SQL_C_USHORT, &row->cpu_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 6, SQL_C_USHORT, &row->memory_usage, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 7, SQL_C_USHORT, &row->open_transaction_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 8, SQL_C_ULONG, &row->logical_reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 9, SQL_C_ULONG, &row->reads, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 10, SQL_C_ULONG, &row->row_count, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 11, SQL_C_ULONG, &row->writes, 0, nullptr), SQL_HANDLE_STMT, hStmt);
+	SQLFUNCEXEX(SQLBindCol(hStmt, 12, SQL_C_TIME, &row->login_time, 0, nullptr), SQL_HANDLE_STMT, hStmt);
 }

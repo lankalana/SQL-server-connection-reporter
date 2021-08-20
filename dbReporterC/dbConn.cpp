@@ -48,7 +48,6 @@ bool isSame(const TCHAR* a, const TCHAR* b) {
 bool operator< (const TIME_STRUCT& t1, const TIME_STRUCT& t2) {
 	return (t1.hour < t2.hour)
 		|| (t1.hour == t2.hour && t1.minute < t2.minute)
-		|| (t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second)
 		|| (t1.hour == t2.hour && t1.minute == t2.minute && t1.second < t2.second);
 	//return (t1.year < t2.year)
 	//	|| (t1.year == t2.year && t1.month < t2.month)

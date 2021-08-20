@@ -4,7 +4,7 @@
 #endif
 #include <windows.h>
 
-#include "dbConn.h"
+#include "dataTypes.h"
 
 #ifdef UNICODE
 #define STRING(x) L ##x
@@ -26,7 +26,7 @@ private:
 public:
 	void clear_screen(char);
 	void addColor(TCHAR* buf, char change);
-	void print(dbConnections conns, dbConnections prevConns);
+	void print(Connected::DB conns, Connected::DB prevConns);
 	void InitConsoleOutput(PHANDLER_ROUTINE);
 
 	template <class T>

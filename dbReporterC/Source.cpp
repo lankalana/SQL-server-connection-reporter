@@ -4,8 +4,8 @@
 #define SLEEP_STEP 250
 
 #include "sql.h"
-#include "dbConn.h"
 #include "console.h"
+#include "dataTypes.h"
 
 static console cons;
 static sql sqlObj;
@@ -43,38 +43,34 @@ int wmain()
 	}
 
 	try {
-		dbConnections prevData;
-		dbConn row;
-		TCHAR host_name[NAME_LEN] = { 0 };
-		TCHAR program_name[NAME_LEN] = { 0 };
-		SQLLEN host_nameSize = NAME_LEN;
-		SQLLEN program_nameSize = NAME_LEN;
-		TCHAR status[60] = { 0 };
-		sqlObj.bindCols(&row, host_name, &host_nameSize, program_name, &program_nameSize, status);
-
+		using namespace Connected;
+		DB prevData;
+		dataRow row;
+		sqlObj.bindCols(&row);
 		while (true)
 		{
-			dbConnections data;
+			DB data;
 			sqlObj.fetchNext();
 			SQLRETURN res = sqlObj.Fetch();
 			while (res != SQL_NO_DATA)
 			{
-				row.connStatus = dbConn::getStatus(status);
-				host* hst = data.Get(host_name, (uint32_t)host_nameSize);
+				Host* hst = data.Get(row.host_name, (uint32_t)row.host_nameSize);
 				if (hst == nullptr)
 				{
-					hst = data.AllocNew();
-					memcpy(hst->name, host_name, (uint32_t)host_nameSize);
-					hst->nameSize = (int)host_nameSize;
+					data.hosts.push_back(Host());
+					hst = &data.hosts.back();
+					memcpy(hst->name, row.host_name, (uint32_t)row.host_nameSize);
+					hst->nameSize = (int)row.host_nameSize;
 				}
-				program* prog = (*hst).Get(program_name, (uint32_t)program_nameSize);
+				Program* prog = (*hst).Get(row.program_name, (uint32_t)row.program_nameSize);
 				if (prog == nullptr)
 				{
-					prog = hst->AllocNew();
-					memcpy(prog->name, program_name, (uint32_t)program_nameSize);
-					prog->nameSize = (int)program_nameSize;
+					hst->programs.push_back(Program());
+					prog = &hst->programs.back();
+					memcpy(prog->name, row.program_name, (uint32_t)row.program_nameSize);
+					prog->nameSize = (int)row.program_nameSize;
 				}
-				memcpy(prog->AllocNew(), &row, sizeof(dbConn));
+				prog->Add(&row);
 				res = sqlObj.Fetch();
 			}
 			sqlObj.CloseCursor();

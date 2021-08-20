@@ -164,7 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
-    <ClCompile Include="dbConn.cpp" />
+    <ClCompile Include="dataTypes.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="sql.cpp" />
   </ItemGroup>
@@ -177,7 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="console.h" />
-    <ClInclude Include="dbConn.h" />
+    <ClInclude Include="dataTypes.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sql.h" />
   </ItemGroup>
